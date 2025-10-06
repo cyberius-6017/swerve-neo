@@ -1,8 +1,7 @@
 package frc.robot.subsystems.Drivetrain;
 
 import com.ctre.phoenix6.configs.MountPoseConfigs;
-import com.ctre.phoenix6.configs.Pigeon2Configuration;
-import com.ctre.phoenix6.hardware.Pigeon2;
+import com.studica.frc.AHRS;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -24,7 +23,7 @@ import frc.robot.Constants;
 
 public class newDriveTrain extends SubsystemBase{
 
-    private Pigeon2 gyro;
+    private AHRS navx = new AHRS(AHRS.NavXComType.kMXP_SPI);
 
     private newSwerveModule[] swerveModules;
     private SwerveModulePosition[] swervePositions;
@@ -39,10 +38,9 @@ public class newDriveTrain extends SubsystemBase{
 
     public newDriveTrain(){
 
-         gyro = new Pigeon2(1);
-        gyro.getConfigurator().apply(new Pigeon2Configuration());
-        gyro.getConfigurator().apply(new MountPoseConfigs().withMountPoseYaw(0));
-        zeroPigeon();
+        navx.reset();
+        zeroNavX();
+        navx.setAngleAdjustment(90);
 
         field = new Field2d();
         SmartDashboard.putData("Field: ", field);
@@ -117,8 +115,8 @@ public class newDriveTrain extends SubsystemBase{
 
       public Rotation2d getYaw() {
 
-        double angle = (Constants.Swerve.invNavX) ? 360 - gyro.getRotation2d().getDegrees()
-                : gyro.getRotation2d().getDegrees();
+        double angle = (Constants.Swerve.invNavX) ? 360 - navx.getAngle() //NavX is flipped
+                                                  : navx.getAngle();
 
         return Rotation2d.fromDegrees(angle);
 
@@ -126,17 +124,16 @@ public class newDriveTrain extends SubsystemBase{
 
     public Rotation2d getOdoYaw() {
 
-        double angle = (!Constants.Swerve.invNavX) ? gyro.getRotation2d().getDegrees()
-                : 360 - gyro.getRotation2d().getDegrees();
-
+        double angle = (!Constants.Swerve.invNavX) ? 360 - navx.getAngle() //NavX is flipped
+                                                   : navx.getAngle();
         return Rotation2d.fromDegrees(angle);
 
     }
 
-    public void zeroPigeon() {
+    public void zeroNavX() {
 
-        System.out.println("Pigeon zeroed correctly");
-        gyro.setYaw(0.0);
+        System.out.println("NavX zeroed correctly");
+        navx.zeroYaw();
 
     }
 

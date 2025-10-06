@@ -14,9 +14,16 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.RelativeEncoder;
 import edu.wpi.first.math.controller.PIDController;
+
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -67,6 +74,23 @@ public class newSwerveModule extends SubsystemBase {
         // driveMotor.setControl(brake);
         configDriveMotor();
 
+
+
+        ClosedLoopConfig driveClosedLoop = new ClosedLoopConfig();
+        driveClosedLoop.feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+                       .p(2.0)
+                       .i(0.0)
+                       .d(0.0)
+                       .outputRange(-1,1);
+
+        SparkMaxConfig driveConfig = new SparkMaxConfig();
+        driveConfig.idleMode(IdleMode.kBrake)
+                    .disableFollowerMode()
+                    .inverted(true)
+                    .apply(driveClosedLoop);
+
+        driveMotor.configure(driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
         lastAngle = getState().angle;
     }
 
@@ -99,37 +123,37 @@ public class newSwerveModule extends SubsystemBase {
 
     private void configSteerMotor() {
 
-        steerMotor.restoreFactoryDefaults();
-        steerMotor.setSmartCurrentLimit(Constants.Swerve.angleContinuousCurrentLimit);
-        steerMotor.setInverted(Constants.Swerve.angleInvert);
-        steerMotor.setIdleMode(IdleMode.kBrake);
-        steerMotorEncoder.setPositionConversionFactor(Constants.Swerve.angleConversionFactor);
-        steerController.setP(Constants.Swerve.angleKP);
-        steerController.setI(Constants.Swerve.angleKI);
-        steerController.setD(Constants.Swerve.angleKD);
-        steerController.setFF(Constants.Swerve.angleKFF);
-        steerMotor.enableVoltageCompensation(Constants.Swerve.voltageComp);
-        steerMotor.burnFlash();
-        resetToAbsolute();
+        // steerMotor.restoreFactoryDefaults();
+        // steerMotor.setSmartCurrentLimit(Constants.Swerve.angleContinuousCurrentLimit);
+        // steerMotor.setInverted(Constants.Swerve.angleInvert);
+        // steerMotor.setIdleMode(IdleMode.kBrake);
+        // steerMotorEncoder.setPositionConversionFactor(Constants.Swerve.angleConversionFactor);
+        // steerController.setP(Constants.Swerve.angleKP);
+        // steerController.setI(Constants.Swerve.angleKI);
+        // steerController.setD(Constants.Swerve.angleKD);
+        // steerController.setFF(Constants.Swerve.angleKFF);
+        // steerMotor.enableVoltageCompensation(Constants.Swerve.voltageComp);
+        // steerMotor.burnFlash();
+        // resetToAbsolute();
 
     }
 
     private void configDriveMotor() {
 
-        //driveMotor.getConfigurator().apply(new TalonFXConfiguration());
-        driveMotor.getConfigurator().apply(new CurrentLimitsConfigs().withStatorCurrentLimit(Constants.Swerve.driveContinuousCurrentLimit));
-        //driveMotor.setInverted(Constants.Swerve.driveInvert);
+        // //driveMotor.getConfigurator().apply(new TalonFXConfiguration());
+        // driveMotor.getConfigurator().apply(new CurrentLimitsConfigs().withStatorCurrentLimit(Constants.Swerve.driveContinuousCurrentLimit));
+        // //driveMotor.setInverted(Constants.Swerve.driveInvert);
         
-        driveMotor.setControl(brake);
+        // driveMotor.setControl(brake);
         
-        var slot0Configs = new Slot0Configs();
-        slot0Configs.kP = Constants.Swerve.driveKP;
-        slot0Configs.kI = Constants.Swerve.driveKI;
-        slot0Configs.kD = Constants.Swerve.driveKD;
+        // var slot0Configs = new Slot0Configs();
+        // slot0Configs.kP = Constants.Swerve.driveKP;
+        // slot0Configs.kI = Constants.Swerve.driveKI;
+        // slot0Configs.kD = Constants.Swerve.driveKD;
 
-        driveMotor.getConfigurator().apply(slot0Configs);
+        // driveMotor.getConfigurator().apply(slot0Configs);
 
-        driveMotor.setPosition(0.0);
+        // driveMotor.setPosition(0.0);
         
     }
 
@@ -141,15 +165,15 @@ public class newSwerveModule extends SubsystemBase {
         
         } 
         else {
-
-            driveMotor.setControl(new VelocityDutyCycle(desiredState.speedMetersPerSecond, 
-                                                        desiredState.speedMetersPerSecond, 
-                                                        true, 
-                                                        feedforward.calculate(desiredState.speedMetersPerSecond), 
-                                                        0, 
-                                                        true, 
-                                                        false, 
-                                                        false));
+            steerController.setReference(feedforward.calculate(desiredState.speedMetersPerSecond), ControlType.kPosition,  ClosedLoopSlot.kSlot0);
+            // driveMotor.setControl(new VelocityDutyCycle(desiredState.speedMetersPerSecond, 
+            //                                             desiredState.speedMetersPerSecond, 
+            //                                             true, 
+            //                                             feedforward.calculate(desiredState.speedMetersPerSecond), 
+            //                                             0, 
+            //                                             true, 
+            //                                             false, 
+            //                                             false));
               
         }
     }
