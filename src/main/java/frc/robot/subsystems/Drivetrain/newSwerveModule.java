@@ -134,7 +134,7 @@ public class newSwerveModule extends SubsystemBase {
         // steerController.setFF(Constants.Swerve.angleKFF);
         // steerMotor.enableVoltageCompensation(Constants.Swerve.voltageComp);
         // steerMotor.burnFlash();
-        // resetToAbsolute();
+        resetToAbsolute();
 
     }
 
