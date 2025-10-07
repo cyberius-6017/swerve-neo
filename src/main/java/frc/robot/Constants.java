@@ -23,74 +23,11 @@ import frc.lib.config.SwerveModuleConstants;
  */
 public final class Constants {
 
-  public static final class Climber {
-
-    public static final int leftClimberID = 16;
-    public static final int rightClimberID = 15;
-
-    public static final double climberKP = 0.5;
-    public static final double climberKI = 0.0;
-    public static final double climberKD = 0.0;
-
-    public static final double climberConversionPositionFactor = 0.007193;
-    
-
-  }
-
-  public static final class Sensors {
-
-    public static final String limef = "limelight-frot";
-    public static final String limeb = "limelight-back";
-
-  }
 
   public static class OperatorConstants {
 
     public static final int driverDriveTrainPort = 0;
-    public static final int driverMechanismsPort = 1;
-
-  }
-
-  public static final class Intake {
-
-    public static final int sensorID = 2;
-
-    public static final double encoderOffset = 0.35;
-    
-    public static final int intakeRightID = 53;
-    public static final int intakeLeftID = 54;
-    public static final int rollerID = 55;
-    
-    public static final double intakeKP = 1.3;
-    public static final double intakeKI = 0.0;
-    public static final double intakeKD = 0.0001;
-    public static final double intakeFF = 0.0;
-
-    public static final double minIntakeOutputRange = -1.0;
-    public static final double maxIntakeOutputRange = 1.0; 
-
-  }
-
-  public static final class Shooter {
-
-    public static final int sensorID = 3;
-
-    public static final double encoderOffset = 0.293;
-
-    public static final int shooterRightID = 14;
-    public static final int shooterLeftID = 17;
-    public static final int indexMotorID = 56;
-    public static final int aimerRightID = 57;
-    public static final int aimerLeftID = 58;
-
-    public static final double shooterKP = 2.5;
-    public static final double shooterKI = 0.0;
-    public static final double shooterKD = 0.0;
-    public static final double shooterFF = 0.0;
-
-
-    public static final double minIntakeOutputRange = -1.0;
-    public static final double maxIntakeOutputRange = 1.0; 
+    // public static final int driverMechanismsPort = 1;
 
   }
 
