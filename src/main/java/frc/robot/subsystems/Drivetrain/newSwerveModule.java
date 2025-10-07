@@ -1,20 +1,13 @@
 package frc.robot.subsystems.Drivetrain;
 
 
-// import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-// import com.ctre.phoenix6.configs.MagnetSensorConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.StaticBrake;
-import com.ctre.phoenix6.controls.VelocityDutyCycle;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
-import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 // import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 // import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.RelativeEncoder;
-import edu.wpi.first.math.controller.PIDController;
-
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -47,9 +40,12 @@ public class newSwerveModule extends SubsystemBase {
     private SparkMax steerMotor;
 
     private RelativeEncoder steerMotorEncoder;
+    private RelativeEncoder driveMotorEncoder;
     private CANcoder angleEncoder;
 
     private final SparkClosedLoopController steerController;
+    private final SparkClosedLoopController driveController;
+
     private final SimpleMotorFeedforward feedforward =  new SimpleMotorFeedforward(Constants.Swerve.driveKS, 
                                                                                    Constants.Swerve.driveKV, 
                                                                                    Constants.Swerve.driveKA);    
@@ -61,27 +57,19 @@ public class newSwerveModule extends SubsystemBase {
         encoderOffset = moduleConstants.encoderOffset;
 
         angleEncoder = new CANcoder(moduleConstants.cancoderID);
+        configAngleEncoder();
+        angleEncoder.getAbsolutePosition().waitForUpdate(0.2);
 
         steerMotor = new SparkMax(moduleConstants.angleMotorID, MotorType.kBrushless);
         steerMotorEncoder = steerMotor.getEncoder();
         steerController = steerMotor.getClosedLoopController();
         configSteerMotor();
 
-        driveMotor = new SparkMax(moduleConstants.driveMotorID, MotorType.kBrushless);       
-        ClosedLoopConfig driveClosedLoop = new ClosedLoopConfig();
-        driveClosedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                       .p(0.2)
-                       .i(0.0)
-                       .d(0.0)
-                       .outputRange(-1,1);
+        driveMotor = new SparkMax(moduleConstants.driveMotorID, MotorType.kBrushless);
+        driveMotorEncoder = driveMotor.getEncoder();
+        driveController = driveMotor.getClosedLoopController();
+        configDriveMotor();
 
-        SparkMaxConfig driveConfig = new SparkMaxConfig();
-        driveConfig.idleMode(IdleMode.kBrake)
-                    .disableFollowerMode()
-                    .inverted(true)
-                    .apply(driveClosedLoop);
-
-        driveMotor.configure(driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         lastAngle = getState().angle;
     }
 
@@ -100,17 +88,6 @@ public class newSwerveModule extends SubsystemBase {
         steerMotorEncoder.setPosition(absolutePosition);
 
     }
-
-    /* 
-    private void configAngleEncoder() {
-
-     
-        angleEncoder.getConfigurator().apply(new CANcoderConfiguration());
-        angleEncoder.getConfigurator().apply(new MagnetSensorConfigs().withAbsoluteSensorRange(AbsoluteSensorRangeValue.Unsigned_0To1));
-        angleEncoder.getConfigurator().apply(new MagnetSensorConfigs().withSensorDirection(SensorDirectionValue.CounterClockwise_Positive));
-
-    }
-    */
 
     private void configSteerMotor() {
 
@@ -138,24 +115,44 @@ public class newSwerveModule extends SubsystemBase {
 
     private void configDriveMotor() {
 
-        // //driveMotor.getConfigurator().apply(new TalonFXConfiguration());
-        // driveMotor.getConfigurator().apply(new CurrentLimitsConfigs().withStatorCurrentLimit(Constants.Swerve.driveContinuousCurrentLimit));
-        // //driveMotor.setInverted(Constants.Swerve.driveInvert);
-        
-        // driveMotor.setControl(brake);
-        
-        // var slot0Configs = new Slot0Configs();
-        // slot0Configs.kP = Constants.Swerve.driveKP;
-        // slot0Configs.kI = Constants.Swerve.driveKI;
-        // slot0Configs.kD = Constants.Swerve.driveKD;
+        SparkMaxConfig driveMotorConfig = new SparkMaxConfig();
+        ClosedLoopConfig driveMotorCLConfig = new ClosedLoopConfig();
+        EncoderConfig driveMotorEncoderConfig = new EncoderConfig();
 
-        // driveMotor.getConfigurator().apply(slot0Configs);
+        driveMotorEncoderConfig.positionConversionFactor(Constants.Swerve.driveConversionPositionFactor);
 
-        // driveMotor.setPosition(0.0);
+        driveMotorCLConfig.feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                          .p(0.2).i(0.0).d(0.0);
+        
+        driveMotorConfig.idleMode(IdleMode.kBrake)
+                        .inverted(Constants.Swerve.angleInvert)
+                        .voltageCompensation(Constants.Swerve.voltageComp)
+                        .smartCurrentLimit(Constants.Swerve.driveContinuousCurrentLimit)
+                        .apply(driveMotorCLConfig)
+                        .apply(driveMotorEncoderConfig);
+
+        driveMotor.configure(driveMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        driveMotorEncoder.setPosition(0.0);
+
         
     }
 
+    
+    private void configAngleEncoder() {
+
+        var angleEncoderConfigs = new CANcoderConfiguration();
+        angleEncoderConfigs.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1.0;
+        angleEncoderConfigs.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
+
+     
+        angleEncoder.getConfigurator().apply(angleEncoderConfigs);
+
+    }
+    
+
     private void setSpeed(SwerveModuleState desiredState, boolean isOpenLoop) {
+
         if (isOpenLoop) {
 
             double power = desiredState.speedMetersPerSecond / Constants.Swerve.maxSpeed;
@@ -164,7 +161,7 @@ public class newSwerveModule extends SubsystemBase {
         } 
         else {
 
-            steerController.setReference(feedforward.calculate(desiredState.speedMetersPerSecond), 
+            driveController.setReference(feedforward.calculate(desiredState.speedMetersPerSecond), 
                                          ControlType.kPosition, 
                                          ClosedLoopSlot.kSlot0);
               
